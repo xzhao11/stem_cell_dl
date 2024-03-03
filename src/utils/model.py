@@ -12,6 +12,7 @@ def train_model(model, criterion, optimizer, dataloaders, num_epochs=25, incepti
     best_model_wts = copy.deepcopy(model.state_dict())
     best_acc = 0.0
     loss_values = []
+    best_val_loss = float('inf')
     for epoch in range(num_epochs+1):
         if epoch % 5 == 0 and debug:
             print(f'Epoch {epoch}/{num_epochs}')
@@ -63,9 +64,13 @@ def train_model(model, criterion, optimizer, dataloaders, num_epochs=25, incepti
                 
 
             # deep copy the model
+            if phase == 'val':
+                if epoch_loss < best_val_loss:
+                    best_val_loss = epoch_loss
+                    best_model_wts = copy.deepcopy(model.state_dict())
             if phase == 'val' and epoch_acc > best_acc:
                 best_acc = epoch_acc
-                best_model_wts = copy.deepcopy(model.state_dict())
+            #     best_model_wts = copy.deepcopy(model.state_dict())
         if epoch % 5 == 0 and debug:  
             print('-' * 10)
 
@@ -73,6 +78,8 @@ def train_model(model, criterion, optimizer, dataloaders, num_epochs=25, incepti
     if output:
         print(f'Training complete in {time_elapsed // 60:.0f}m {time_elapsed % 60:.0f}s')
         print(f'Best val Acc: {best_acc:4f}')
+        print(f'Best val loss: {best_val_loss:4f}')
+
 
     # load best model weights
     model.load_state_dict(best_model_wts)

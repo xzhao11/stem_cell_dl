@@ -141,16 +141,24 @@ transform_inception = transforms.Compose([
 ])
 
 # Load the dataset
-def get_dataloaders(time, inception=False, data_enrich=False):
+def get_dataloaders(time, test_ratio=0.2, inception=False, data_enrich=False):
     if inception:
         dataset = MyDataset("../../images", transform=transform_inception, timestamp=time, data_enrich=data_enrich)
     else:
         dataset = MyDataset("../../images", transform=transform, timestamp=time, data_enrich=data_enrich)
-    train_dataset, val_test_dataset = train_test_split(dataset, test_size=0.2, random_state=42)
-    validation_dataset, test_dataset = train_test_split(val_test_dataset, test_size=0.5, random_state=42)
-    # Create data loaders for train and test sets
+    labels = dataset.labels
+    train_dataset, remaining_data, train_labels, remaining_labels = train_test_split(dataset, labels, test_size=test_ratio, stratify=labels, random_state=42)
+    validation_dataset, test_dataset, validation_labels, test_labels = train_test_split(remaining_data, remaining_labels, test_size=0.5, stratify=remaining_labels, random_state=42)
     train_dataloader = DataLoader(train_dataset, batch_size=8, shuffle=True, drop_last=True)
     validation_dataloader = DataLoader(validation_dataset, batch_size=8, shuffle=False)
     test_dataloader = DataLoader(test_dataset, batch_size=8, shuffle=False)
+
+    
+    # train_dataset, val_test_dataset = train_test_split(dataset, test_size=test_ratio, random_state=42)
+    # validation_dataset, test_dataset = train_test_split(val_test_dataset, test_size=0.5, random_state=42)
+    # # Create data loaders for train and test sets
+    # train_dataloader = DataLoader(train_dataset, batch_size=8, shuffle=True, drop_last=True)
+    # validation_dataloader = DataLoader(validation_dataset, batch_size=8, shuffle=False)
+    # test_dataloader = DataLoader(test_dataset, batch_size=8, shuffle=False)
     dataloaders = {'train': train_dataloader, 'val': validation_dataloader, 'test': test_dataloader}
     return dataloaders
